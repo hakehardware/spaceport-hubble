@@ -8,7 +8,7 @@ from src.log_parser import LogParser
 class EventManager:
     def __init__(self, config) -> None:
         self.host_ip = config['host_ip']
-        self.chronicle_ip = config['chronicle_ip']
+        self.api_base_url = config['api_base_url']
         self.docker_client = docker.from_env()
         self.stop_event = threading.Event()
         self.containers = []
@@ -67,7 +67,7 @@ class EventManager:
             sys.exit(1)
 
     def launch_thread(self, container):
-        LogParser(container, self.docker_client, self.stop_event, self.chronicle_ip).start()
+        LogParser(container, self.docker_client, self.stop_event, self.api_base_url).start()
 
     def run(self):
         try:

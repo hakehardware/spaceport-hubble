@@ -4,15 +4,16 @@ import re
 from src.logger import logger
 from datetime import datetime, timezone
 from src.events import events
+from src.api import API
 
 class LogParser:
-    def __init__(self, container, docker_client, stop_event, chronicle_ip) -> None:
+    def __init__(self, container, docker_client, stop_event, api_base_url) -> None:
         self.container_id = container['container_id']
         self.container_alias = container['container_alias']
         self.container_type = container['container_type']
         self.docker_client = docker_client
         self.stop_event = stop_event
-        self.chronicle_ip = chronicle_ip
+        self.api_base_url = api_base_url
         self.container = None
 
     def normalize_date(self, date_str):
@@ -55,17 +56,18 @@ class LogParser:
                         'event_name': e['event_name'],
                         'event_type': e['event_type'],
                         'event_level': normalized_log['event_level'],
-                        'event_datetime': normalized_log['event_datetime'],
-                        'event_container_id': self.container_id,
                         'event_container_alias': self.container_alias,
+                        'event_container_id': self.container_id,
                         'event_container_type': self.container_type,
-                        'event_data': e['event_data_extraction'](match) if e['event_data_extraction'] else None
+                        'event_data': e['event_data_extraction'](match) if e['event_data_extraction'] else None,
+                        'event_datetime': normalized_log['event_datetime']
                     }
                 
             return None
 
         except Exception as e:
             logger.error(f"Error parsing event from normalized log:", exc_info=e)
+            logger.error(normalized_log)
 
     def start(self):
         logger.info(f"Starting Stream Parser for {self.container_alias} of type {self.container_type}.")
@@ -84,7 +86,14 @@ class LogParser:
                     self.stop_event.wait(30)
                     continue
 
-                start = datetime.min.replace(tzinfo=timezone.utc)
+                last_event = API.get_last_event_for_container_id(self.container_id, self.api_base_url)
+
+                if last_event:
+                    logger.info(f"Getting Logs Since: {last_event[0].get('event_datetime')} for {self.container_id}")
+                    start = datetime.strptime(last_event[0].get('event_datetime'), "%Y-%m-%d %H:%M:%S")
+                else:
+                    start = datetime.min.replace(tzinfo=timezone.utc)
+
                 generator = container.logs(since=start, stdout=True, stderr=True, stream=True)
                 for log in generator:
                     try:
@@ -101,7 +110,8 @@ class LogParser:
                         if not event:
                             continue
 
-                        logger.info(event)
+                        # Insert event into db
+                        API.insert_event(event, self.api_base_url)
 
                     except Exception as e:
                         logger.error(f"Error in generator for {self.container_alias}:", exc_info=e)

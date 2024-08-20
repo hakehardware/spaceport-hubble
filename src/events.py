@@ -1,19 +1,13 @@
 from src.data_extraction import DataExtraction
+from src.event_actions import EventActions
 
 events = [
-    # {
-    #     'event_name': None, # Name of the event
-    #     'event_description': None, # Description of the event
-    #     'event_type': None, # NATs, Container, Cache, Farmer, Controller, 
-    #     'event_pattern': None, # Regex pattern to match the event
-    #     'event_action': None # Function to execute when event is found
-    # },
     {
         'event_name': 'NATs Connected',
         'event_description': 'Container has connected to NATs',
         'event_type': 'NATs',
         'event_pattern': r"^async_nats: event: connected$",
-        'event_action': None,
+        'event_action': EventActions.action_nats_connected,
         'event_data_extraction': None
     },
     {
@@ -102,7 +96,7 @@ events = [
         'event_type': 'Controller',
         'event_pattern': r"New cache discovered.*cache_id=(?P<cache_id>\w+)",
         'event_action': None,
-        'event_data_extraction': DataExtraction.extract_dsn_listening_address
+        'event_data_extraction': DataExtraction.extract_cache_id
     },
     {
         'event_name': 'Initializing piece cache',

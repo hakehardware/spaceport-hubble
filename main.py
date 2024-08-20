@@ -6,13 +6,13 @@ def main():
     parser = argparse.ArgumentParser(description='Spaceport - Event Manager')
 
     parser.add_argument('--host_ip', type=str, required=True, help='Host IP')
-    parser.add_argument('--chronicle_ip', type=str, required=True, help='Chronicle IP')
+    parser.add_argument('--api_base_url', type=str, required=True, help='API Base URL')
 
     args = parser.parse_args()
 
     config = {
         'host_ip': args.host_ip,
-        'chronicle_ip': args.chronicle_ip
+        'api_base_url': args.api_base_url
     }
 
     logger.info(f"Got Config: {config}")
