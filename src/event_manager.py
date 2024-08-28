@@ -1,9 +1,11 @@
 import docker
 import threading
 import sys
+from datetime import datetime
 
 from src.logger import logger
 from src.log_parser import LogParser
+from src.api import API
 
 class EventManager:
     def __init__(self, config) -> None:
@@ -13,6 +15,45 @@ class EventManager:
         self.stop_event = threading.Event()
         self.containers = []
 
+    def normalize_date(self, date_str):
+        # Truncate the fractional seconds to 6 digits
+        truncated_date_str = date_str[:26] + 'Z'
+        # Parse the input date string
+        dt = datetime.strptime(truncated_date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+        # Return the formatted date string
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def get_container_ip(self, container):
+        try:
+            # Get the network mode of the container
+            network_mode = container.attrs.get('HostConfig', {}).get('NetworkMode', '')
+            
+            # Get the IP address based on the network mode
+            container_ip = container.attrs.get('NetworkSettings', {}).get('Networks', {}).get(network_mode, {}).get('IPAddress', '')
+            
+            # If IP address is not found using the network mode, search through the networks
+            if not container_ip:
+                networks = container.attrs.get('NetworkSettings', {}).get('Networks', {})
+                for network_name, network_data in networks.items():
+                    if network_data.get('NetworkID') == network_mode:
+                        container_ip = network_data.get('IPAddress', '')
+                        break
+
+            return container_ip
+        except Exception as e:
+            print(f"Error getting container IP: {e}")
+            return None
+        
+    def get_nats_url(self, command):
+        if not command:
+            return 0
+        
+        for c in command:
+            if 'nats://' in c:
+                return c
+            
+        return None
+    
     def get_container_type(self, command):
         if 'cache' in command and 'cluster' in command:
             container_type = 'cluster_cache'
@@ -31,28 +72,51 @@ class EventManager:
         try:
             containers = self.docker_client.containers.list(all=True)
             for container in containers:
+
                 container_label = container.attrs['Config']['Labels'].get('com.spaceport.name')
-                logger.info(container.image.tags[0])
+                nats_url = self.get_nats_url(container.attrs['Config']['Cmd'])
+                container_ip = self.get_container_ip(container)
+                is_cluster = 1 if nats_url else 0
+                started_at = self.normalize_date(container.attrs.get('State').get('StartedAt'))
+                image = container.image.tags[0]
 
-                if 'ghcr.io/autonomys/node' in container.image.tags[0]:
+                if 'ghcr.io/autonomys/node' in image:
                     self.containers.append({
+                        'container_id': container.id,
                         'container_type': 'node',
-                        'container_id': container.id,
-                        'container_alias': container_label if container_label else container.name
+                        'container_alias': container_label if container_label else container.name,
+                        'container_status': container.status,
+                        'container_image': image,
+                        'container_started_at': started_at,
+                        'container_is_cluster': is_cluster,
+                        'container_nats_url': nats_url,
+                        'container_ip': container_ip
                     })
 
-                elif 'ghcr.io/autonomys/farmer' in container.image.tags[0]:
+                elif 'ghcr.io/autonomys/farmer' in image:
                     self.containers.append({
+                        'container_id': container.id,
                         'container_type': self.get_container_type(container.attrs['Config']['Cmd']),
-                        'container_id': container.id,
-                        'container_alias': container_label if container_label else container.name
+                        'container_alias': container_label if container_label else container.name,
+                        'container_status': container.status,
+                        'container_image': image,
+                        'container_started_at': started_at,
+                        'container_is_cluster': is_cluster,
+                        'container_nats_url': nats_url,
+                        'container_ip': container_ip
                     })
 
-                elif 'nats' in container.image.tags[0]:
+                elif 'nats' in image:
                     self.containers.append({
-                        'container_type': 'nats',
                         'container_id': container.id,
-                        'container_alias': container_label if container_label else container.name
+                        'container_type': 'nats',
+                        'container_alias': container_label if container_label else container.name,
+                        'container_status': container.status,
+                        'container_image': image,
+                        'container_started_at': started_at,
+                        'container_is_cluster': is_cluster,
+                        'container_nats_url': nats_url,
+                        'container_ip': container_ip
                     })
 
             if len(self.containers) == 0:
@@ -60,7 +124,8 @@ class EventManager:
                 sys.exit(1)
 
             for container in self.containers:
-                logger.info(container)
+                logger.info(f"Upserting Container {container['container_alias']}")
+                API.insert_container(container, self.api_base_url)
 
         except Exception as e:
             logger.error(f'Error getting container:', exc_info=e)
@@ -89,6 +154,3 @@ class EventManager:
         except KeyboardInterrupt:
             print("Stop signal received. Gracefully shutting down monitors.")
             self.stop_event.set()  # Ensure the stop event is set
-
-
-

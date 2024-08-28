@@ -16,6 +16,25 @@ class LogParser:
         self.api_base_url = api_base_url
         self.container = None
 
+    def upsert_farmer(self, container):
+        command = container.attrs['Config']['Cmd']
+
+        reward_address = None
+        reward_address_index = command.index('--reward-address')
+        if not reward_address_index:
+            logger.warn('Unable to extract reward address.')
+        else:
+            reward_address = command[reward_address_index + 1]
+
+        farmer = {
+            'farmer_id': self.container_alias,
+            'container_id': self.container_id,
+            'farmer_reward_address': reward_address,
+            'farmer_status': 1
+        }
+
+        API.insert_farmer(farmer, self.api_base_url)
+
     def normalize_date(self, date_str):
         # Truncate the fractional seconds to 6 digits
         truncated_date_str = date_str[:26] + 'Z'
@@ -52,7 +71,7 @@ class LogParser:
                 match = re.search(e['event_pattern'], normalized_log['event_data'])
                 if match:
 
-                    return {
+                    event = {
                         'event_name': e['event_name'],
                         'event_type': e['event_type'],
                         'event_level': normalized_log['event_level'],
@@ -62,6 +81,8 @@ class LogParser:
                         'event_data': e['event_data_extraction'](match) if e['event_data_extraction'] else None,
                         'event_datetime': normalized_log['event_datetime']
                     }
+
+                    if e['event_action']: e['event_action'](event, self.api_base_url)
                 
             return None
 
@@ -76,6 +97,8 @@ class LogParser:
         if not container:
             logger.error(f"Unable to get container for container id: {self.container_id}")
             sys.exit(1)
+
+        if self.container_type == 'cluster_farmer': self.upsert_farmer(container)
 
         while not self.stop_event.is_set():
             try:
@@ -111,7 +134,7 @@ class LogParser:
                             continue
 
                         # Insert event into db
-                        API.insert_event(event, self.api_base_url)
+                        # API.insert_event(event, self.api_base_url)
 
                     except Exception as e:
                         logger.error(f"Error in generator for {self.container_alias}:", exc_info=e)

@@ -126,7 +126,7 @@ class DataExtraction:
     @staticmethod
     def extract_identified_public_key(match):
         return {
-            'genesis_hash': match.group('genesis_hash'),
+            'public_key': match.group('public_key'),
             'farm_index': match.group('farm_index')
         }
     
@@ -167,7 +167,7 @@ class DataExtraction:
         return {
             'farm_index': match.group('farm_index'),
             'sector_index': match.group('sector_index'),
-            'farm_index': match.group('percent'),
+            'percent': match.group('percent'),
         }
     
     @staticmethod
@@ -229,14 +229,14 @@ class DataExtraction:
     @staticmethod
     def extract_plot_sector_request(match):
         return {
-            'public_key': match.group('public_key'),
+            'public_key': '0x' + match.group('public_key'),
             'sector_index': match.group('sector_index')
         }
     
     @staticmethod
     def extract_finished_plot_sector_request(match):
         return {
-            'public_key': match.group('public_key'),
+            'public_key': '0x' + match.group('public_key'),
             'sector_index': match.group('sector_index')
         }
     

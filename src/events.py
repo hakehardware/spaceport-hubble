@@ -7,7 +7,7 @@ events = [
         'event_description': 'Container has connected to NATs',
         'event_type': 'NATs',
         'event_pattern': r"^async_nats: event: connected$",
-        'event_action': EventActions.action_nats_connected,
+        'event_action': None,
         'event_data_extraction': None
     },
     {
@@ -203,11 +203,11 @@ events = [
         'event_data_extraction': DataExtraction.extract_benchmarking_faster_proving
     },
     {
-        'event_name': 'Benchmarking faster proving method',
-        'event_description': 'Benchmarking faster proving method',
+        'event_name': 'Faster proving method found',
+        'event_description': 'Faster proving method found',
         'event_type': 'Farmer',
         'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}.*Faster proving method found fastest_mode=(?P<fastest_mode>\w+)",
-        'event_action': None,
+        'event_action': EventActions.action_faster_proving_method_found,
         'event_data_extraction': DataExtraction.extract_faster_proving_method_found
     },
     {
@@ -215,7 +215,7 @@ events = [
         'event_description': 'Identified Farm ID',
         'event_type': 'Farmer',
         'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}.*ID:\s+(?P<ID>\w+)",
-        'event_action': None,
+        'event_action': EventActions.action_identified_farm_id,
         'event_data_extraction': DataExtraction.extract_identified_farm_id
     },
     {
@@ -223,15 +223,15 @@ events = [
         'event_description': 'Identified Genesis hash',
         'event_type': 'Farmer',
         'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}.*Genesis hash:\s+(?P<genesis_hash>0x\w+)",
-        'event_action': None,
+        'event_action': EventActions.action_identified_genesis_hash,
         'event_data_extraction': DataExtraction.extract_identified_genesis_hash
     },
     {
         'event_name': 'Identified Public key',
         'event_description': 'Identified Public key',
         'event_type': 'Farmer',
-        'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}.*Genesis hash:\s+(?P<genesis_hash>0x\w+)",
-        'event_action': None,
+        'event_pattern': r"farm_index=(?P<farm_index>\d+).*?Public key:\s+(?P<public_key>[^\s]+)",
+        'event_action': EventActions.action_identified_public_key,
         'event_data_extraction': DataExtraction.extract_identified_public_key
     },
     {
@@ -239,15 +239,15 @@ events = [
         'event_description': 'Identified Allocated space',
         'event_type': 'Farmer',
         'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}.*Allocated space:\s+(?P<allocated_space>\d+\.\d+\s+[TGM]iB)",
-        'event_action': None,
+        'event_action': EventActions.action_identified_allocated_space,
         'event_data_extraction': DataExtraction.extract_identified_allocated_space
     },
     {
         'event_name': 'Identified Farm Directory',
         'event_description': 'Identified Farm Directory',
         'event_type': 'Farmer',
-        'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}.*Allocated space:\s+(?P<allocated_space>\d+\.\d+\s+[TGM]iB)",
-        'event_action': None,
+        'event_pattern': r"farm_index=(?P<farm_index>\d+).*?Directory:\s+(?P<directory>[^\s]+)",
+        'event_action': EventActions.action_identified_farm_directory,
         'event_data_extraction': DataExtraction.extract_identified_directory
     },
     {
@@ -279,7 +279,7 @@ events = [
         'event_description': 'Replotting sector',
         'event_type': 'Farmer',
         'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}:\{sector_index=(?P<sector_index>\d+)\}.*Replotting sector \((?P<percent>\d+\.\d+)% complete\)",
-        'event_action': None,
+        'event_action': EventActions.action_replotting_sector,
         'event_data_extraction': DataExtraction.extract_replotting_sector
     },
     {
@@ -287,7 +287,7 @@ events = [
         'event_description': 'Plotting sector',
         'event_type': 'Farmer',
         'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}:\{sector_index=(?P<sector_index>\d+)\}.*Plotting sector \((?P<percent>\d+\.\d+)% complete\)",
-        'event_action': None,
+        'event_action': EventActions.action_plotting_sector,
         'event_data_extraction': DataExtraction.extract_plotting_sector
     },
     {
@@ -303,7 +303,7 @@ events = [
         'event_description': 'Replotting complete',
         'event_type': 'Farmer',
         'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}.*Replotting complete",
-        'event_action': None,
+        'event_action': EventActions.action_replotting_complete,
         'event_data_extraction': DataExtraction.extract_replotting_complete
     },
     {
@@ -319,7 +319,7 @@ events = [
         'event_description': 'Initial plotting complete',
         'event_type': 'Farmer',
         'event_pattern': r"\{farm_index=(?P<farm_index>\d+)\}.*Initial plotting complete",
-        'event_action': None,
+        'event_action': EventActions.action_initial_plotting_complete,
         'event_data_extraction': DataExtraction.extract_initial_plotting_complete
     },
     {
