@@ -125,7 +125,7 @@ class EventManager:
 
             for container in self.containers:
                 logger.info(f"Upserting Container {container['container_alias']}")
-                API.insert_container(container, self.api_base_url)
+                # API.insert_container(container, self.api_base_url)
 
         except Exception as e:
             logger.error(f'Error getting container:', exc_info=e)

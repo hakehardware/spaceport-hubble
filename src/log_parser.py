@@ -33,7 +33,7 @@ class LogParser:
             'farmer_status': 1
         }
 
-        API.insert_farmer(farmer, self.api_base_url)
+        # API.insert_farmer(farmer, self.api_base_url)
 
     def normalize_date(self, date_str):
         # Truncate the fractional seconds to 6 digits
@@ -54,7 +54,7 @@ class LogParser:
             
             if match:
                 return {
-                    'event_datetime': self.normalize_date(match.group("datetime")),
+                    'event_datetime': match.group("datetime"),
                     'event_level': match.group("level"),
                     'event_data': match.group("data")
                 }
@@ -72,17 +72,19 @@ class LogParser:
                 if match:
 
                     event = {
-                        'event_name': e['event_name'],
-                        'event_type': e['event_type'],
-                        'event_level': normalized_log['event_level'],
-                        'event_container_alias': self.container_alias,
-                        'event_container_id': self.container_id,
-                        'event_container_type': self.container_type,
-                        'event_data': e['event_data_extraction'](match) if e['event_data_extraction'] else None,
-                        'event_datetime': normalized_log['event_datetime']
+                        'name': e['event_name'],
+                        'type': e['event_type'],
+                        'level': normalized_log['event_level'],
+                        'containerAlias': self.container_alias,
+                        'containerId': self.container_id,
+                        'containerType': self.container_type,
+                        'data': e['event_data_extraction'](match) if e['event_data_extraction'] else None,
+                        'eventTime': normalized_log['event_datetime']
                     }
 
-                    if e['event_action']: e['event_action'](event, self.api_base_url)
+                    # if e['event_action']: e['event_action'](event, self.api_base_url)
+
+                    return event
                 
             return None
 
@@ -110,10 +112,10 @@ class LogParser:
                     continue
 
                 last_event = API.get_last_event_for_container_id(self.container_id, self.api_base_url)
-
-                if last_event:
-                    logger.info(f"Getting Logs Since: {last_event[0].get('event_datetime')} for {self.container_id}")
-                    start = datetime.strptime(last_event[0].get('event_datetime'), "%Y-%m-%d %H:%M:%S")
+                if len(last_event) > 0:
+                    event_time_str = last_event[0].get('eventTime')
+                    logger.info(f"Getting Logs Since: {event_time_str} for {self.container_id}")
+                    start = datetime.fromisoformat(event_time_str.replace('Z', '+00:00'))
                 else:
                     start = datetime.min.replace(tzinfo=timezone.utc)
 
@@ -134,7 +136,7 @@ class LogParser:
                             continue
 
                         # Insert event into db
-                        # API.insert_event(event, self.api_base_url)
+                        API.insert_event(event, self.api_base_url)
 
                     except Exception as e:
                         logger.error(f"Error in generator for {self.container_alias}:", exc_info=e)

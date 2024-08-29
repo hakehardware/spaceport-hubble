@@ -3,6 +3,6 @@ services:
   app:
     build: .
     container_name: spaceport_event_manager
-    command: ["python", "main.py", "--api_base_url", "http://192.168.69.12:9998", "--host_ip", "192.168.69.23"]
+    command: ["python", "main.py", "--api_base_url", "http://192.168.69.12:3001", "--host_ip", "192.168.69.23"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Need this to run docker commands
