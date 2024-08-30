@@ -78,7 +78,7 @@ class LogParser:
                         'containerAlias': self.container_alias,
                         'containerId': self.container_id,
                         'containerType': self.container_type,
-                        'data': e['event_data_extraction'](match) if e['event_data_extraction'] else None,
+                        'data': e['event_data_extraction'](match) if e['event_data_extraction'] else {},
                         'eventTime': normalized_log['event_datetime']
                     }
 
