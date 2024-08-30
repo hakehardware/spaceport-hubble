@@ -16,7 +16,7 @@ In Portainer, or via docker-compose deploy:
 services:
   hubble:
     container_name: spaceport-hubble
-    image: hakehardware/spaceport-hubble:0.0.2-hotfix
+    image: hakehardware/spaceport-hubble:0.0.2-hotfix2
     restart: unless-stopped
     environment:
       - TZ=America/Phoenix
