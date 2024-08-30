@@ -62,6 +62,8 @@ In Hubble this container will have the label "Terminator Controller" instead of 
 If you wish to build the image yourself locally, a dockerfile is included for this purpose.  With docker installed run:
 
 ```bash
+git clone https://github.com/hakehardware/spaceport-hubble.git
+cd spaceport-hubble
 docker build -t custom-hubble-build .
 ```
 
