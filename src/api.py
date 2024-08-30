@@ -7,7 +7,6 @@ class API:
     @staticmethod
     def insert_event(event, api_base_url):
         local_url = f"{api_base_url}/api/events"
-        logger.info(event)
         try:
             response = requests.post(local_url, json=event)
 
@@ -19,7 +18,9 @@ class API:
 
     @staticmethod
     def get_last_event_for_container_id(container_id, api_base_url):
-        local_url = f"{api_base_url}/api/events?container_id={container_id}&take=1"
+        local_url = f"{api_base_url}/api/events?containerId={container_id}&take=1"
+
+        logger.info(local_url)
         response = requests.get(local_url)
 
         if response.status_code < 300:

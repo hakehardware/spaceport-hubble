@@ -110,14 +110,19 @@ class LogParser:
                     logger.warn(f"Container must be running, current status: {container.status}")
                     self.stop_event.wait(30)
                     continue
-
+                
+                logger.info(f"Checking latest logs for {self.container_id}")
                 last_event = API.get_last_event_for_container_id(self.container_id, self.api_base_url)
+                logger.info(last_event)
+
                 if len(last_event) > 0:
                     event_time_str = last_event[0].get('eventTime')
                     logger.info(f"Getting Logs Since: {event_time_str} for {self.container_id}")
                     start = datetime.fromisoformat(event_time_str.replace('Z', '+00:00'))
                 else:
                     start = datetime.min.replace(tzinfo=timezone.utc)
+
+                sys.exit(1)
 
                 generator = container.logs(since=start, stdout=True, stderr=True, stream=True)
                 for log in generator:
