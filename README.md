@@ -11,7 +11,7 @@ More indepth instructions which include installation of Cosmos can be found on m
 
 
 #### Abbreviated Instructions
-In Portainer, or via Dockercompose deploy:
+In Portainer, or via docker-compose deploy:
 ```yml
 services:
   hubble:
@@ -27,6 +27,8 @@ services:
 ```
 
 Make sure to update the api_base_url with whatever URL Cosmos is deployed at. Also update the version to the latest available.
+
+Hubble should only be deployed after Cosmos as it will immediately begin sending events to the API.
 
 #### Container Metadata
 Hubble scrapes container metadata, and it's recommended to label your Autonomys containers to give them an Alias for easy readability on Cosmos. For instance, in this docker-compose you can see a label is provided. This will get picked up by Hubble:
@@ -54,7 +56,7 @@ Hubble scrapes container metadata, and it's recommended to label your Autonomys 
         ipv4_address: 172.25.0.103
 ```
 
-In Hubble this container will have the label "Terminator Controller instead of the container_name of "autonomys_controller". This is more human readable and is recommended. Note that you must use the label "com.spaceport.name"
+In Hubble this container will have the label "Terminator Controller" instead of the container_name of "autonomys_controller". This is more human readable and is recommended. Note that you must use the label "com.spaceport.name"
 
 ### Advanced
 If you wish to build the image yourself locally, a dockerfile is included for this purpose.  With docker installed run:
