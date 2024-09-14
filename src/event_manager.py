@@ -80,7 +80,7 @@ class EventManager:
                 started_at = self.normalize_date(container.attrs.get('State').get('StartedAt'))
                 image = container.image.tags[0]
 
-                if 'ghcr.io/autonomys/node' in image:
+                if 'ghcr.io/autonomys/node' in image or 'autonomys_node':
                     self.containers.append({
                         'container_id': container.id,
                         'container_type': 'node',
@@ -93,7 +93,7 @@ class EventManager:
                         'container_ip': container_ip
                     })
 
-                elif 'ghcr.io/autonomys/farmer' in image:
+                elif 'ghcr.io/autonomys/farmer' in image or 'autonomys_farmer' in image:
                     self.containers.append({
                         'container_id': container.id,
                         'container_type': self.get_container_type(container.attrs['Config']['Cmd']),

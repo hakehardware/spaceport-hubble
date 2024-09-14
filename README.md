@@ -59,6 +59,8 @@ Hubble scrapes container metadata, and it's recommended to label your Autonomys 
 In Hubble this container will have the label "Terminator Controller" instead of the container_name of "autonomys_controller". This is more human readable and is recommended. Note that you must use the label "com.spaceport.name"
 
 ### Advanced
+
+#### Build your own image
 If you wish to build the image yourself locally, a dockerfile is included for this purpose.  With docker installed run:
 
 ```bash
@@ -68,3 +70,10 @@ docker build -t custom-hubble-build .
 ```
 
 Now in Portainer, or your docker-compose, you could reference the image as "custom-hubble-build". 
+
+#### Custom Autonomys images
+If you build your own Autonomys images you will need to either update the image names that hubble looks for (in event_manager.py) or make sure to build your images to be either:
+1. autonomys_node for your Node
+1. autonomys_farmer for your Farmer
+
+The script is already programmed to look for images that contain that string, so if your image is named one of those it will pick it up.
