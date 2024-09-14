@@ -5,6 +5,7 @@ from datetime import datetime
 
 from src.logger import logger
 from src.log_parser import LogParser
+from src.asset_monitor import AssetMonitor
 from src.api import API
 
 class EventManager:
@@ -56,15 +57,15 @@ class EventManager:
     
     def get_container_type(self, command):
         if 'cache' in command and 'cluster' in command:
-            container_type = 'cluster_cache'
+            container_type = 'CLUSTER_CACHE'
         elif 'controller' in command and 'cluster' in command:
-            container_type = 'cluster_controller'
+            container_type = 'CLUSTER_CONTROLLER'
         elif 'farmer' in command and 'cluster' in command:
-            container_type = 'cluster_farmer'
+            container_type = 'CLUSTER_FARMER'
         elif 'plotter' in command and 'cluster' in command:
-            container_type = 'cluster_plotter'
+            container_type = 'CLUSTER_PLOTTER'
         else:
-            container_type = 'farmer'
+            container_type = 'FARMER'
 
         return container_type
 
@@ -74,65 +75,42 @@ class EventManager:
             for container in containers:
 
                 container_label = container.attrs['Config']['Labels'].get('com.spaceport.name')
-                nats_url = self.get_nats_url(container.attrs['Config']['Cmd'])
-                container_ip = self.get_container_ip(container)
-                is_cluster = 1 if nats_url else 0
-                started_at = self.normalize_date(container.attrs.get('State').get('StartedAt'))
                 image = container.image.tags[0]
 
-                if 'ghcr.io/autonomys/node' in image or 'autonomys_node':
+                if 'ghcr.io/autonomys/node' in image or 'autonomys_node' in image:
                     self.containers.append({
                         'container_id': container.id,
-                        'container_type': 'node',
-                        'container_alias': container_label if container_label else container.name,
-                        'container_status': container.status,
-                        'container_image': image,
-                        'container_started_at': started_at,
-                        'container_is_cluster': is_cluster,
-                        'container_nats_url': nats_url,
-                        'container_ip': container_ip
+                        'container_type': 'NODE',
+                        'container_alias': container_label if container_label else container.name
                     })
 
                 elif 'ghcr.io/autonomys/farmer' in image or 'autonomys_farmer' in image:
                     self.containers.append({
                         'container_id': container.id,
                         'container_type': self.get_container_type(container.attrs['Config']['Cmd']),
-                        'container_alias': container_label if container_label else container.name,
-                        'container_status': container.status,
-                        'container_image': image,
-                        'container_started_at': started_at,
-                        'container_is_cluster': is_cluster,
-                        'container_nats_url': nats_url,
-                        'container_ip': container_ip
+                        'container_alias': container_label if container_label else container.name
                     })
 
                 elif 'nats' in image:
                     self.containers.append({
                         'container_id': container.id,
-                        'container_type': 'nats',
-                        'container_alias': container_label if container_label else container.name,
-                        'container_status': container.status,
-                        'container_image': image,
-                        'container_started_at': started_at,
-                        'container_is_cluster': is_cluster,
-                        'container_nats_url': nats_url,
-                        'container_ip': container_ip
+                        'container_type': 'NATS',
+                        'container_alias': container_label if container_label else container.name
                     })
 
             if len(self.containers) == 0:
                 logger.error('No containers found. Are you sure they are running?')
                 sys.exit(1)
 
-            for container in self.containers:
-                logger.info(f"Upserting Container {container['container_alias']}")
-                # API.insert_container(container, self.api_base_url)
-
         except Exception as e:
             logger.error(f'Error getting container:', exc_info=e)
             sys.exit(1)
 
-    def launch_thread(self, container):
+    def launch_parser_thread(self, container):
         LogParser(container, self.docker_client, self.stop_event, self.api_base_url).start()
+
+    def launch_asset_thread(self):
+        AssetMonitor(self.containers, self.docker_client, self.stop_event, self.api_base_url).start()
 
     def run(self):
         try:
@@ -142,11 +120,18 @@ class EventManager:
 
             for container in self.containers:
                 thread = threading.Thread(
-                    target=self.launch_thread,
+                    target=self.launch_parser_thread,
                     args=(container,)
                 )
                 threads.append(thread)
                 thread.start()
+
+            # Launch a thread here for AssetMonitor() and pass self.containers
+            asset_monitor_thread = threading.Thread(
+                target=self.launch_asset_thread
+            )
+            threads.append(asset_monitor_thread)
+            asset_monitor_thread.start()
 
             for thread in threads:
                 thread.join()

@@ -22,15 +22,14 @@ class LogParser:
         reward_address = None
         reward_address_index = command.index('--reward-address')
         if not reward_address_index:
-            logger.warn('Unable to extract reward address.')
+            logger.warning('Unable to extract reward address.')
         else:
             reward_address = command[reward_address_index + 1]
 
         farmer = {
             'farmer_id': self.container_alias,
             'container_id': self.container_id,
-            'farmer_reward_address': reward_address,
-            'farmer_status': 1
+            'farmer_reward_address': reward_address
         }
 
         # API.insert_farmer(farmer, self.api_base_url)
@@ -100,14 +99,14 @@ class LogParser:
             logger.error(f"Unable to get container for container id: {self.container_id}")
             sys.exit(1)
 
-        if self.container_type == 'cluster_farmer': self.upsert_farmer(container)
+        # if self.container_type == 'cluster_farmer': self.upsert_farmer(container)
 
         while not self.stop_event.is_set():
             try:
                 container.reload()  
 
                 if container.status != 'running':
-                    logger.warn(f"Container must be running, current status: {container.status}")
+                    logger.warning(f"Container must be running, current status: {container.status}")
                     self.stop_event.wait(30)
                     continue
                 
