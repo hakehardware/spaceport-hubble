@@ -16,7 +16,7 @@ In Portainer, or via docker-compose deploy:
 services:
   hubble:
     container_name: spaceport-hubble
-    image: hakehardware/spaceport-hubble:0.0.2-hotfix2
+    image: hakehardware/spaceport-hubble:0.0.3
     restart: unless-stopped
     environment:
       - TZ=America/Phoenix
@@ -36,7 +36,7 @@ Hubble scrapes container metadata, and it's recommended to label your Autonomys 
 ```yml
   farmer_controller:
     container_name: autonomys_controller
-    image: ghcr.io/autonomys/farmer:gemini-3h-2024-jul-29
+    image: ghcr.io/autonomys/farmer:gemini-3h-2024-sep-03
     volumes:
       - /home/hakehardware/autonomys_cluster/controller:/controller
     command:
